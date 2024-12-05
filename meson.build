@@ -204,7 +204,6 @@ possible_cc_flags = [
     '-Wunused-but-set-variable',
     '-Wno-unused-parameter',
     '-Wfloat-equal',
-    '-Wsuggest-attribute=noreturn',
     '-Werror=return-type',
     '-Werror=incompatible-pointer-types',
     '-Wformat=2',
@@ -249,6 +248,9 @@ if cc.get_id() == 'clang'
             '-Wno-gnu-variable-sized-type-not-at-end',
     ]
 endif
+possible_cc_flags += [
+    '-ffat-lto-objects',
+]
 
 if meson.version().version_compare('>=0.46')
     add_project_link_arguments(cc.get_supported_link_arguments(possible_link_flags), language: 'c')
@@ -503,7 +505,11 @@ int func (void) {
 }
 '''
 
-have_func_strerror_r_char_p = cc.compiles(code, name : 'strerror_r() returns char *')
+    if cc.get_id() == 'clang'
+        have_func_strerror_r_char_p = cc.compiles(code, args : '-Wno-error=unused-command-line-argument', name : 'strerror_r() returns char *')
+    else
+        have_func_strerror_r_char_p = cc.compiles(code, name : 'strerror_r() returns char *')
+    endif
 endif
 
 srcconf.set10('STRERROR_R_CHAR_P', have_func_strerror_r_char_p)
@@ -685,7 +691,7 @@ endif
 
 if cc.get_define('FS_CONFIG_SET_CMD_CREATE', prefix: decl_headers) != ''
     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_CREATE'.underscorify().to_upper(), true)
-    found_types += 'FS_CONFIG_SET_CMD_CREAT (sys/mount.h)'
+    found_types += 'FS_CONFIG_SET_CMD_CREATE (sys/mount.h)'
 else
     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_CREATE'.underscorify().to_upper(), false)
     missing_types += 'FS_CONFIG_SET_CMD_CREATE (sys/mount.h)'
