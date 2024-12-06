@@ -2224,12 +2224,15 @@ static inline bool enter_net_ns(struct lxc_container *c)
 	if (pid < 0)
 		return false;
 
+	if (!switch_to_ns(pid, "net"))
+		return false;
+
 	if ((geteuid() != 0 || (c->lxc_conf && !list_empty(&c->lxc_conf->id_map))) &&
 	    (access("/proc/self/ns/user", F_OK) == 0))
 		if (!switch_to_ns(pid, "user"))
 			return false;
 
-	return switch_to_ns(pid, "net");
+	return true;
 }
 
 /* Used by qsort and bsearch functions for comparing names. */
