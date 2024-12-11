@@ -2219,18 +2219,21 @@ WRAP_API_1(bool, lxcapi_clear_config_item, const char *)
 
 static inline bool enter_net_ns(struct lxc_container *c)
 {
+	bool net_ns_entered;
 	pid_t pid = do_lxcapi_init_pid(c);
 
 	if (pid < 0)
 		return false;
 
-	if (!switch_to_ns(pid, "net"))
-		return false;
+	net_ns_entered = switch_to_ns(pid, "net");
 
 	if ((geteuid() != 0 || (c->lxc_conf && !list_empty(&c->lxc_conf->id_map))) &&
 	    (access("/proc/self/ns/user", F_OK) == 0))
 		if (!switch_to_ns(pid, "user"))
 			return false;
+
+	if (!net_ns_entered)
+		return switch_to_ns(pid, "net");
 
 	return true;
 }
